@@ -31,3 +31,13 @@ negocio.Base.metadata.create_all(bind=engine)
 
 from app.api import auth
 app.include_router(auth.router)
+
+#Superadmin
+# El Super Admin ahora puede:
+# Crear, listar, modificar y eliminar negocios y empleados
+from app.api import superadmin
+app.include_router(superadmin.router)
+
+#Empleados
+from app.api import empleados
+app.include_router(empleados.router)
