@@ -9,6 +9,8 @@ from app.core.roles import verify_role
 from app.schemas.empleado import EmpleadoUpdate
 from app.models.servicio import Servicio
 from app.schemas.servicio import ServicioCreate, ServicioUpdate
+from app.models.turno import Turno
+from app.schemas.turno import TurnoCreate, TurnoUpdate
 
 router = APIRouter(prefix="/superadmin", tags=["Super Admin"])
 
@@ -159,3 +161,44 @@ def eliminar_servicio(servicio_id: int,
     db.delete(servicio)
     db.commit()
     return {"mensaje": "Servicio eliminado"}
+
+# Turnos
+
+@router.post("/turnos")
+def crear_turno(data: TurnoCreate,
+                db: Session = Depends(get_db),
+                current_user: User = Depends(verify_role("super_admin"))):
+    nuevo = Turno(**data.dict())
+    db.add(nuevo)
+    db.commit()
+    db.refresh(nuevo)
+    return nuevo
+
+@router.get("/turnos")
+def listar_turnos(db: Session = Depends(get_db),
+                    current_user: User = Depends(verify_role("super_admin"))):
+    return db.query(Turno).all()
+
+@router.put("/turnos/{turno_id}")
+def actualizar_turno(turno_id: int, update: TurnoUpdate,
+                        db: Session = Depends(get_db),
+                        current_user: User = Depends(verify_role("super_admin"))):
+    turno = db.query(Turno).filter(Turno.id == turno_id).first()
+    if not turno:
+        raise HTTPException(status_code=404, detail="Turno no encontrado")
+    for field, value in update.dict(exclude_unset=True).items():
+        setattr(turno, field, value)
+    db.commit()
+    db.refresh(turno)
+    return turno
+
+@router.delete("/turnos/{turno_id}")
+def eliminar_turno(turno_id: int,
+                    db: Session = Depends(get_db),
+                    current_user: User = Depends(verify_role("super_admin"))):
+    turno = db.query(Turno).filter(Turno.id == turno_id).first()
+    if not turno:
+        raise HTTPException(status_code=404, detail="Turno no encontrado")
+    db.delete(turno)
+    db.commit()
+    return {"mensaje": "Turno eliminado"}
