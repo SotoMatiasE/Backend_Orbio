@@ -7,9 +7,11 @@ class ServicioBase(BaseModel):
     precio: float
     direccion: str  # 👈 agregado aquí
 
-class ServicioCreate(ServicioBase):
-    negocio_id: int
-    duracion: int
+class ServicioCreate(BaseModel):
+    nombre: str
+    descripcion: Optional[str] = None
+    precio: float
+    duracion: int  # minutos
 
 class ServicioUpdate(BaseModel):
     nombre: Optional[str] = None

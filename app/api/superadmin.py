@@ -6,7 +6,7 @@ from app.models.user import User, UserRole
 from app.utils.security import hash_password
 from app.core.deps import get_db
 from app.core.roles import verify_role
-from app.schemas.empleado import EmpleadoUpdate
+from app.schemas.empleado import EmpleadoUpdate, EmpleadoCreate
 from app.models.servicio import Servicio
 from app.schemas.servicio import ServicioCreate, ServicioUpdate
 from app.models.turno import Turno
@@ -87,7 +87,115 @@ def eliminar_negocio(negocio_id: int,
     db.commit()
     return {"mensaje": "Negocio eliminado"}
 
+@router.get("/negocios/{negocio_id}/empleados")
+def listar_empleados_por_negocio(
+    negocio_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(verify_role("super_admin"))
+):
+    negocio = db.query(Negocio).filter(Negocio.id == negocio_id).first()
+    if not negocio:
+        raise HTTPException(status_code=404, detail="Negocio no encontrado")
+
+    empleados = db.query(User).filter(
+        User.negocio_id == negocio_id,
+        User.rol == UserRole.empleado
+    ).all()
+
+    return empleados
+
+#Obtener todos los servicios de un negocio específico:
+@router.get("/negocios/{negocio_id}/servicios")
+def listar_servicios_de_negocio(
+    negocio_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(verify_role("super_admin"))
+):
+    negocio = db.query(Negocio).filter(Negocio.id == negocio_id).first()
+    if not negocio:
+        raise HTTPException(status_code=404, detail="Negocio no encontrado")
+
+    servicios = db.query(Servicio).filter(Servicio.negocio_id == negocio_id).all()
+    return servicios
+
+#Obtener todos los servicios de un empleado específico dentro de un negocio específico
+@router.get("/negocios/{negocio_id}/empleados/{empleado_id}/servicios")
+def listar_servicios_empleado_de_negocio(
+    negocio_id: int,
+    empleado_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(verify_role("super_admin"))
+):
+    empleado = db.query(User).filter(
+        User.id == empleado_id,
+        User.negocio_id == negocio_id,
+        User.rol == UserRole.empleado
+    ).first()
+
+    if not empleado:
+        raise HTTPException(status_code=404, detail="Empleado no encontrado en este negocio")
+
+    servicios = db.query(Servicio).filter(
+        Servicio.negocio_id == negocio_id,
+        Servicio.empleado_id == empleado_id
+    ).all()
+
+    return servicios
+
+
 # CRUD de empleados (modo Super Admin)
+
+@router.post("/empleados")
+def crear_empleado(data: EmpleadoCreate,
+                    db: Session = Depends(get_db),
+                    current_user: User = Depends(verify_role("super_admin"))):
+    existente = db.query(User).filter(User.email == data.email).first()
+    if existente:
+        raise HTTPException(status_code=400, detail="Email ya registrado")
+    
+    nuevo_empleado = User(
+        nombre=data.nombre,
+        email=data.email,
+        hashed_password=hash_password(data.password),
+        rol=UserRole.empleado,
+        negocio_id=data.negocio_id
+    )
+    db.add(nuevo_empleado)
+    db.commit()
+    db.refresh(nuevo_empleado)
+    return {"mensaje": "Empleado creado correctamente", "empleado_id": nuevo_empleado.id}
+
+@router.post("/empleados/{empleado_id}/servicios")
+def crear_servicio_para_empleado(
+    empleado_id: int,
+    data: ServicioCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(verify_role("super_admin"))
+):
+    empleado = db.query(User).filter(
+        User.id == empleado_id,
+        User.rol == UserRole.empleado
+    ).first()
+
+    if not empleado:
+        raise HTTPException(status_code=404, detail="Empleado no encontrado")
+
+    nuevo_servicio = Servicio(
+        nombre=data.nombre,
+        descripcion=data.descripcion,
+        precio=data.precio,
+        duracion=data.duracion,
+        negocio_id=empleado.negocio_id,  # lo toma del empleado
+        empleado_id=empleado.id
+    )
+    db.add(nuevo_servicio)
+    db.commit()
+    db.refresh(nuevo_servicio)
+
+    return {
+        "mensaje": "Servicio creado para el empleado correctamente",
+        "servicio_id": nuevo_servicio.id
+    }
 
 @router.get("/empleados")
 def listar_todos_empleados(db: Session = Depends(get_db),
@@ -134,9 +242,14 @@ def crear_servicio(data: ServicioCreate,
     return nuevo
 
 @router.get("/servicios")
-def listar_servicios(db: Session = Depends(get_db),
-                        current_user: User = Depends(verify_role("super_admin"))):
-    return db.query(Servicio).all()
+def listar_servicios_por_negocio(
+    negocio_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(verify_role("super_admin"))
+):
+    servicios = db.query(Servicio).filter(Servicio.negocio_id == negocio_id).all()
+    return servicios
+
 
 @router.put("/servicios/{servicio_id}")
 def editar_servicio(servicio_id: int, update: ServicioUpdate,

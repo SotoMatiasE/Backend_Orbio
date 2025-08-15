@@ -7,6 +7,7 @@ class EmpleadoCreate(BaseModel):
     nombre: str
     email: EmailStr
     password: str
+    negocio_id: int
 
 class EmpleadoOut(BaseModel):
     id: int
