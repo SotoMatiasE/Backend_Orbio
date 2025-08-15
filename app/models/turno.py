@@ -1,5 +1,7 @@
 from sqlalchemy import Column, Integer, String, DateTime, Float, ForeignKey
 from app.db.session import Base
+from sqlalchemy.orm import relationship
+from app.models.cliente import Cliente 
 
 class Turno(Base):
     __tablename__ = "turnos"
@@ -13,3 +15,5 @@ class Turno(Base):
     estado = Column(String, nullable=False)
     servicio_id = Column(Integer, ForeignKey("servicios.id"))
     empleado_id = Column(Integer, ForeignKey("users.id"))
+    cliente_id = Column(Integer, ForeignKey("clientes.id"))
+    cliente = relationship("Cliente", backref="turnos")

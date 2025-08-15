@@ -24,7 +24,7 @@ class ShowTurno(TurnoBase):
     servicio_id: int
     empleado_id: int
     class Config:
-        orm_mode = True
+        form_mode = True
 
 class TurnoEmpleadoUpdate(BaseModel):
     estado: Optional[str] = None

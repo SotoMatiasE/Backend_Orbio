@@ -14,7 +14,7 @@ class EmpleadoOut(BaseModel):
     email: EmailStr
 
     class Config:
-        orm_mode = True
+        form_mode = True
         
 class EmpleadoUpdate(BaseModel):
     nombre: Optional[str]

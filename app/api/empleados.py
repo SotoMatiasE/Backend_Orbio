@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from datetime import date, timedelta
-
 from app.db.session import get_db
 from app.models import turno as TurnoModel, agenda as AgendaModel, servicio as ServicioModel, user as UserModel
 from app.schemas.turno import ShowTurno, TurnoEmpleadoUpdate
+from app.schemas.servicio import ServicioCreate, ServicioOut, ServicioUpdate
 from app.schemas.empleado import EmpleadoCreate, EmpleadoOut, AgendaCreateEmpleado, ServicioEmpleado, ServicioUpdateEmpleado
 from app.schemas.agenda import ShowAgenda
 from app.utils.security import hash_password
@@ -111,7 +111,11 @@ def listar_mi_agenda(db: Session = Depends(get_db),
 def crear_mi_servicio(data: ServicioEmpleado,
                         db: Session = Depends(get_db),
                         current_user: UserModel.User = Depends(verify_role("empleado"))):
-    nuevo = ServicioModel.Servicio(**data.dict(), negocio_id=current_user.negocio_id, empleado_id=current_user.id)
+    nuevo = ServicioModel.Servicio(
+        **data.dict(),
+        negocio_id=current_user.negocio_id,
+        empleado_id=current_user.id
+    )
     db.add(nuevo)
     db.commit()
     db.refresh(nuevo)
@@ -146,3 +150,63 @@ def eliminar_mi_servicio(servicio_id: int,
     db.delete(servicio)
     db.commit()
     return {"detail": "Servicio eliminado con éxito"}
+
+@router.post("/empleado/servicio", response_model=ServicioOut)
+def crear_servicio_empleado(
+    data: ServicioCreate,
+    db: Session = Depends(get_db),
+    current_user: UserModel.User = Depends(verify_role("empleado"))
+):
+    nuevo_servicio = ServicioModel.Servicio(
+        nombre=data.nombre,
+        descripcion=data.descripcion,
+        precio=data.precio,
+        negocio_id=data.negocio_id,
+        empleado_id=current_user.id,
+        duracion=data.duracion  # Asegurate de que lo tenga el schema
+    )
+    db.add(nuevo_servicio)
+    db.commit()
+    db.refresh(nuevo_servicio)
+    return nuevo_servicio
+
+#Empleado editar servicio 
+@router.put("/empleado/servicio/{servicio_id}", response_model=ServicioOut)
+def editar_servicio_empleado(
+    servicio_id: int,
+    data: ServicioUpdate,
+    db: Session = Depends(get_db),
+    current_user: UserModel.User = Depends(verify_role("empleado"))
+):
+    servicio = db.query(ServicioModel.Servicio).filter_by(id=servicio_id, empleado_id=current_user.id).first()
+    if not servicio:
+        raise HTTPException(status_code=404, detail="Servicio no encontrado o no te pertenece")
+
+    if data.nombre is not None:
+        servicio.nombre = data.nombre
+    if data.descripcion is not None:
+        servicio.descripcion = data.descripcion
+    if data.precio is not None:
+        servicio.precio = data.precio
+    if data.duracion is not None:
+        servicio.duracion = data.duracion
+
+    db.commit()
+    db.refresh(servicio)
+    return servicio
+
+#Empleado eliminar servicio
+
+@router.delete("/empleado/servicio/{servicio_id}")
+def eliminar_servicio_empleado(
+    servicio_id: int,
+    db: Session = Depends(get_db),
+    current_user: UserModel.User = Depends(verify_role("empleado"))
+):
+    servicio = db.query(ServicioModel.Servicio).filter_by(id=servicio_id, empleado_id=current_user.id).first()
+    if not servicio:
+        raise HTTPException(status_code=404, detail="Servicio no encontrado o no te pertenece")
+
+    db.delete(servicio)
+    db.commit()
+    return {"message": "Servicio eliminado correctamente"}

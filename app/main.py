@@ -3,9 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.deps import get_current_user
 from fastapi import Depends
 
-
 app = FastAPI()
-
 
 # Middleware CORS para desarrollo
 app.add_middleware(
@@ -21,13 +19,11 @@ app.add_middleware(
 def ruta_protegida(usuario=Depends(get_current_user)):
     return {"mensaje": f"Hola {usuario.nombre}, accediste con tu token."}
 
-
 #CREAR TABLAS
-from app.db.session import engine
-from app.models import user, negocio
+from app.db.session import Base, engine
+from app import models 
 
-user.Base.metadata.create_all(bind=engine)
-negocio.Base.metadata.create_all(bind=engine)
+Base.metadata.create_all(bind=engine)
 
 from app.api import auth
 app.include_router(auth.router)
@@ -41,3 +37,8 @@ app.include_router(superadmin.router)
 #Empleados
 from app.api import empleados
 app.include_router(empleados.router)
+
+#Ruta publica cliente
+from app.api.publico import router_publico
+app.include_router(router_publico)
+

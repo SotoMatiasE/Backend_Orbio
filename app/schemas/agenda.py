@@ -10,4 +10,4 @@ class ShowAgenda(BaseModel):
     duracion_turno: int
 
     class Config:
-        orm_mode = True
+        form_mode = True

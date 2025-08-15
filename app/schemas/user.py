@@ -25,4 +25,4 @@ class ShowUser(BaseModel):
     rol: UserRole
 
     class Config:
-        orm_mode = True
+        form_mode = True

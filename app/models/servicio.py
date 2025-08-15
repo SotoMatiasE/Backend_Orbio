@@ -9,4 +9,6 @@ class Servicio(Base):
     nombre = Column(String, nullable=False)
     descripcion = Column(String, nullable=True)
     precio = Column(Float, nullable=False)
+    duracion = Column(Integer, nullable=False)
     negocio_id = Column(Integer, ForeignKey("negocios.id"))
+    empleado_id = Column(Integer, ForeignKey("users.id"))
