@@ -19,3 +19,6 @@ class User(Base):
     negocio_id = Column(Integer, ForeignKey("negocios.id"), nullable=True)
 
     negocio = relationship("Negocio", back_populates="usuarios", foreign_keys=[negocio_id])
+    servicios = relationship("Servicio", back_populates="empleado", foreign_keys="Servicio.empleado_id")
+
+

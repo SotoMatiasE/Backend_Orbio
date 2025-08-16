@@ -1,13 +1,19 @@
-from pydantic import BaseModel, EmailStr
-from datetime import datetime, time
-from typing import Optional, List
+from pydantic import BaseModel
+from datetime import date, time
 
 class ShowAgenda(BaseModel):
     id: int
-    dia: str
+    dia: date
     hora_inicio: time
     hora_fin: time
     duracion_turno: int
 
     class Config:
-        form_mode = True
+        orm_mode = True
+
+
+class AgendaCreateEmpleado(BaseModel):
+    dia: date
+    hora_inicio: time
+    hora_fin: time
+    duracion_turno: int

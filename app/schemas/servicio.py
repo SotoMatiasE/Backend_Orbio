@@ -12,6 +12,7 @@ class ServicioCreate(BaseModel):
     descripcion: Optional[str] = None
     precio: float
     duracion: int  # minutos
+    negocio_id: int
 
 class ServicioUpdate(BaseModel):
     nombre: Optional[str] = None
@@ -41,3 +42,11 @@ class ServicioOut(BaseModel):
 
     class Config:
         orm_mode = True
+        
+class ServicioCreateAdmin(BaseModel):
+    nombre: str
+    descripcion: Optional[str] = None
+    precio: float
+    duracion: int
+    direccion: str
+

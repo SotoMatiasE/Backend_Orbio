@@ -14,3 +14,4 @@ class Negocio(Base):
 
     usuarios = relationship("User", back_populates="negocio", foreign_keys="User.negocio_id")
     dueño = relationship("User", foreign_keys=[dueño_id])
+    servicios = relationship("Servicio", back_populates="negocio", foreign_keys="Servicio.negocio_id")
